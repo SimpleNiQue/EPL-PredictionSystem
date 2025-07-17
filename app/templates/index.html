@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EPL Match Predictor</title>
     <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </head>
 <body>
     <div class="container">
@@ -27,6 +29,10 @@
                     {% endfor %}
                 </select>
             </div>
+            <div class="form-group">
+                <label for="match_date">Match Date</label>
+                <input type="text" id="match_date" name="match_date" required>
+            </div>
             <button type="submit">Predict</button>
         </form>
         <div id="result" class="result" style="display:none;">
@@ -35,38 +41,100 @@
             <h3>Probabilities</h3>
             <ul id="probabilities-list"></ul>
         </div>
+        <div id="spinner" class="spinner" style="display:none;"></div>
+        <div id="puns" class="puns" style="display:none;"></div>
     </div>
     <script>
         document.getElementById('prediction-form').addEventListener('submit', async function (e) {
             e.preventDefault();
             const homeTeam = document.getElementById('home_team').value;
             const awayTeam = document.getElementById('away_team').value;
+            const matchDate = document.getElementById('match_date').value;
             const resultDiv = document.getElementById('result');
             const predictionText = document.getElementById('prediction-text');
             const probabilitiesList = document.getElementById('probabilities-list');
+            const spinner = document.getElementById('spinner');
+            const punsDiv = document.getElementById('puns');
 
-            const response = await fetch('/predict', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ home_team: homeTeam, away_team: awayTeam }),
-            });
+            const footballPuns = [
+                "Why did the soccer ball quit the team? It was tired of being kicked around.",
+                "What do you call a psychic little person escaping from prison? A small medium at large.",
+                "Why are soccer players so good at math? They know how to use their heads.",
+                "What is a ghost's favorite soccer position? Ghoul-keeper.",
+                "Why did the chicken get ejected from the soccer game? For persistent fowl play.",
+                "Why did the football player bring string to the game? So he could tie the score.",
+                "What did the receiver say to the football? \"Catch you later!\"",
+                "How do football players stay cool? They stand near the fans.",
+                "Why did the football player ask his coach to flood the field? So he could go in as a sub.",
+                "What do you call a lineman's kid? A chip off the old blocker!",
+                "Why can't you play football in the jungle? Because there are too many cheetahs.",
+                "What is a football player's favorite ice cream? Aston Vanilla!",
+                "Where do football players dance? At a football.",
+                "Why did the football team go to the bank? To get their quarterback.",
+                "What's the difference between a quarterback and a baby? One takes the snap, the other takes a nap.",
+                "Why was the tiny ghost asked to join the football team? They needed a little team spirit.",
+                "What do you call a boat full of polite football players? A good sportsman-ship.",
+                "Why do football players struggle with finishing a book? They can never get past the title page.",
+                "What did the football coach say to the broken vending machine? \"I want my quarterback!\"",
+                "Why are football stadiums so cool? They have a fan in every seat.",
+                "What's a football player's favorite part of a joke? The punchline.",
+                "Why did the football player cross the road? To get to the other sideline.",
+                "What do you get when you cross a football player and a werewolf? A touchdown on the first bite.",
+                "Why don't football players wear glasses? Because it's a contact sport.",
+                "How do you get a football player to do the wave? You put him in the ocean."
+            ];
 
-            if (response.ok) {
-                const data = await response.json();
-                predictionText.textContent = data.prediction;
-                probabilitiesList.innerHTML = '';
-                for (const [outcome, probability] of Object.entries(data.probabilities)) {
-                    const li = document.createElement('li');
-                    li.textContent = `${outcome}: ${Math.round(probability * 100)}%`;
-                    probabilitiesList.appendChild(li);
+            let punInterval;
+
+            // Hide previous results and show spinner
+            resultDiv.style.display = 'none';
+            spinner.style.display = 'block';
+            punsDiv.style.display = 'block';
+
+            const displayRandomPun = () => {
+                const randomIndex = Math.floor(Math.random() * footballPuns.length);
+                punsDiv.textContent = footballPuns[randomIndex];
+            };
+
+            displayRandomPun();
+            punInterval = setInterval(displayRandomPun, 3000);
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ home_team: homeTeam, away_team: awayTeam, match_date: matchDate }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    predictionText.textContent = data.prediction;
+                    probabilitiesList.innerHTML = '';
+                    for (const [outcome, probability] of Object.entries(data.probabilities)) {
+                        const li = document.createElement('li');
+                        li.textContent = `${outcome}: ${Math.round(probability * 100)}%`;
+                        probabilitiesList.appendChild(li);
+                    }
+                    resultDiv.style.display = 'block';
+                } else {
+                    const error = await response.json();
+                    alert(`Error: ${error.detail}`);
                 }
-                resultDiv.style.display = 'block';
-            } else {
-                const error = await response.json();
-                alert(`Error: ${error.detail}`);
+            } catch (error) {
+                alert('An unexpected error occurred.');
+            } finally {
+                // Hide spinner and puns
+                spinner.style.display = 'none';
+                punsDiv.style.display = 'none';
+                clearInterval(punInterval);
             }
+        });
+
+        flatpickr("#match_date", {
+            dateFormat: "Y-m-d",
+            defaultDate: "today"
         });
     </script>
 </body>

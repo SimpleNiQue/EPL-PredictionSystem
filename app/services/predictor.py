@@ -3,6 +3,7 @@ import pandas as pd
 import joblib
 from app.config import MODEL_PATH, METADATA_PATH, DATA_DIR
 from app.utils.stats import get_rolling_averages
+import time
 
 # Load model and metadata
 model = joblib.load(MODEL_PATH)
@@ -29,7 +30,7 @@ def predict(home_team: str, away_team: str, match_date: pd.Timestamp):
     home_avg_gs, home_avg_gc, home_avg_pts = get_rolling_averages(matches, home_team, match_date)
     away_avg_gs, away_avg_gc, away_avg_pts = get_rolling_averages(matches, away_team, match_date)
 
-        # Create the feature vector for the model
+    # Create the feature vector for the model
     input_df = pd.DataFrame(0, index=[0], columns=feature_columns)
 
     # Fill in the calculated features
@@ -55,7 +56,8 @@ def predict(home_team: str, away_team: str, match_date: pd.Timestamp):
     probabilities = model.predict_proba(input_df)[0]
     outcome_map = {'H': 'Home Win', 'D': 'Draw', 'A': 'Away Win'}
     classes = model.classes_
-
+    
+    time.sleep(10)
     return {
         "prediction": outcome_map.get(prediction, "Unknown"),
         "probabilities": {outcome_map.get(cls): float(prob) for cls, prob in zip(classes, probabilities)}
