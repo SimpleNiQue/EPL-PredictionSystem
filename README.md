@@ -120,7 +120,7 @@ The application will typically run on `http://127.0.0.1:8000`. Open this URL in 
 If you only want to run the FastAPI backend without the Jinja2 templating for the UI, you can use the `scripts/main.py` file:
 
 ```bash
-uvicorn scripts.main:app --reload
+uvicorn app.main:app --reload
 ```
 
 This will start the API server, usually accessible at `http://127.0.0.1:8000`. You can then interact with the API endpoints (e.g., `/predict`, `/teams`) using tools like Postman, Insomnia, or `curl`.
