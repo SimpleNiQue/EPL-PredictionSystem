@@ -5,6 +5,10 @@ import pandas as pd
 
 router = APIRouter()
 
+@router.get("/teams")
+def get_teams():
+    """Returns a list of all available teams."""
+    return {"teams": all_teams}
 
 
 @router.post("/predict")
