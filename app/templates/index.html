@@ -1,0 +1,73 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPL Match Predictor</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>EPL Match Predictor</h1>
+        <form id="prediction-form">
+            <div class="form-group">
+                <label for="home_team">Home Team</label>
+                <select id="home_team" name="home_team" required>
+                    {% for team in teams %}
+                    <option value="{{ team }}">{{ team }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="away_team">Away Team</label>
+                <select id="away_team" name="away_team" required>
+                    {% for team in teams %}
+                    <option value="{{ team }}">{{ team }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit">Predict</button>
+        </form>
+        <div id="result" class="result" style="display:none;">
+            <h2>Prediction</h2>
+            <p id="prediction-text"></p>
+            <h3>Probabilities</h3>
+            <ul id="probabilities-list"></ul>
+        </div>
+    </div>
+    <script>
+        document.getElementById('prediction-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const homeTeam = document.getElementById('home_team').value;
+            const awayTeam = document.getElementById('away_team').value;
+            const resultDiv = document.getElementById('result');
+            const predictionText = document.getElementById('prediction-text');
+            const probabilitiesList = document.getElementById('probabilities-list');
+
+            const response = await fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ home_team: homeTeam, away_team: awayTeam }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                predictionText.textContent = data.prediction;
+                probabilitiesList.innerHTML = '';
+                for (const [outcome, probability] of Object.entries(data.probabilities)) {
+                    const li = document.createElement('li');
+                    li.textContent = `${outcome}: ${Math.round(probability * 100)}%`;
+                    probabilitiesList.appendChild(li);
+                }
+                resultDiv.style.display = 'block';
+            } else {
+                const error = await response.json();
+                alert(`Error: ${error.detail}`);
+            }
+        });
+    </script>
+</body>
+</html>
